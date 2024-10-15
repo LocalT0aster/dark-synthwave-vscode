@@ -25,14 +25,20 @@ function activate(context) {
 
   let disposable = vscode.commands.registerCommand("darkSynthwave84.enableNeon", function () {
     const isWin = /^win/.test(process.platform);
-    const appDir = path.dirname(require.main.filename);
-    const base = appDir + (isWin ? "\\vs\\code" : "/vs/code");
+    const appDir = vscode.env.appRoot;
+    const base = appDir + (isWin ? "\\out\\vs\\code" : "/out/vs/code");
+    const electronBase = isVSCodeBelowVersion("1.70.0") ? "electron-browser" : "electron-sandbox";
 
     const htmlFile =
-      base + (isWin ? "\\electron-sandbox\\workbench\\workbench.html" : "/electron-sandbox/workbench/workbench.html");
+      base +
+      (isWin
+        ? "\\" + electronBase + "\\workbench\\workbench.esm.html"
+        : "/" + electronBase + "/workbench/workbench.esm.html");
 
     const templateFile =
-      base + (isWin ? "\\electron-sandbox\\workbench\\neondreams.js" : "/electron-sandbox/workbench/neondreams.js");
+      base +
+      (isWin ? "\\" + electronBase + "\\workbench\\neondreams.js" : "/" + electronBase + "/workbench/neondreams.js");
+
     try {
       // const version = context.globalState.get(`${context.extensionName}.version`);
 
@@ -85,7 +91,7 @@ function activate(context) {
     } catch (e) {
       if (/ENOENT|EACCES|EPERM/.test(e.code)) {
         vscode.window.showInformationMessage(
-          "You must run VS code with admin priviliges in order to enable Neon Dreams.",
+          "Neon Dreams was unable to modify the core VS code files needed to launch the extension. You may need to run VS code with admin privileges in order to enable Neon Dreams.",
         );
         return;
       } else {
@@ -109,10 +115,15 @@ function deactivate() {
 
 function uninstall() {
   var isWin = /^win/.test(process.platform);
-  var appDir = path.dirname(require.main.filename);
-  var base = appDir + (isWin ? "\\vs\\code" : "/vs/code");
+  var appDir = vscode.env.appRoot;
+  var base = appDir + (isWin ? "\\out\\vs\\code" : "/out/vs/code");
+  var electronBase = isVSCodeBelowVersion("1.70.0") ? "electron-browser" : "electron-sandbox";
+
   var htmlFile =
-    base + (isWin ? "\\electron-sandbox\\workbench\\workbench.html" : "/electron-sandbox/workbench/workbench.html");
+    base +
+    (isWin
+      ? "\\" + electronBase + "\\workbench\\workbench.esm.html"
+      : "/" + electronBase + "/workbench/workbench.esm.html");
 
   // modify workbench html
   const html = fs.readFileSync(htmlFile, "utf-8");
@@ -138,6 +149,22 @@ function uninstall() {
   } else {
     vscode.window.showInformationMessage("Neon dreams isn't running.");
   }
+}
+
+// Returns true if the VS Code version running this extension is below the
+// version specified in the "version" parameter. Otherwise returns false.
+function isVSCodeBelowVersion(version) {
+  const vscodeVersion = vscode.version;
+  const vscodeVersionArray = vscodeVersion.split(".");
+  const versionArray = version.split(".");
+
+  for (let i = 0; i < versionArray.length; i++) {
+    if (vscodeVersionArray[i] < versionArray[i]) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 module.exports = {
